@@ -1,0 +1,45 @@
+# Environment variables (contains database credentials)
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Cache
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Misc
+.cache/
+tmp/
+prisma/migrations/
