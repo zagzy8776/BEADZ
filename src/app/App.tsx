@@ -26,9 +26,11 @@ import {
   type Testimonial,
   type GalleryImage,
   productWhatsApp,
-  waMessage,
+  shareWhatsApp,
+  getSessionId,
+  addToCart,
+  type CartItem,
   SOCIAL,
-  GOOGLE_MAPS_EMBED,
   GOOGLE_MAPS_DIR,
 } from "./api.ts";
 
@@ -433,18 +435,15 @@ function ContactFooter() {
           </div>
         </div>
 
-        {/* Google Maps */}
-        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/10">
-          <iframe
-            src={GOOGLE_MAPS_EMBED}
-            width="100%"
-            height="280"
-            style={{ border: 0, filter: "invert(90%) hue-rotate(180deg)" }}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Evangel Collectibles location"
-          />
-        </div>
+        {/* Get Directions */}
+        <a href={GOOGLE_MAPS_DIR} target="_blank" rel="noreferrer"
+          className="flex items-center justify-center gap-3 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-white no-underline transition-all hover:bg-white/20">
+          <MapIcon size={28} />
+          <div>
+            <p className="text-lg font-bold">Get Directions</p>
+            <p className="text-sm text-white/60">Open in Google Maps →</p>
+          </div>
+        </a>
       </div>
 
       {/* Bottom section */}

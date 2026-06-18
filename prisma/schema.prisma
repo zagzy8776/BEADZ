@@ -18,31 +18,65 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   subtitle    String
   price       Float
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  category    Category      @relation(fields: [categoryId], references: [id])
   badge       String?
   image       String
-  inStock     Boolean  @default(true)
+  inStock     Boolean       @default(true)
+  stockCount  Int           @default(0)
   description String?
+  variants    ProductVariant[]
   wishlists   Wishlist[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model ProductVariant {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  name      String
+  price     Float
+  inStock   Boolean @default(true)
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Order {
+  id           String     @id @default(uuid())
+  items        Json
+  total        Float
+  summary      String?
+  type         String     @default("transfer")
+  customerName String?
+  phone        String?
+  email        String?
+  address      String?
+  status       String     @default("pending")
+  discount     Float      @default(0)
+  couponCode   String?
+  orderItems   OrderItem[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model OrderItem {
   id        String   @id @default(uuid())
-  items     Json
-  total     Float
-  summary   String?
-  type      String   @default("cart")
-  phone     String?
-  status    String   @default("pending")
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  variantId String?
+  quantity  Int      @default(1)
+  price     Float
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model CustomBuild {
@@ -60,6 +94,19 @@ model CustomBuild {
   updatedAt DateTime @updatedAt
 }
 
+model CartItem {
+  id        String   @id @default(uuid())
+  sessionId String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  variantId String?
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sessionId, productId, variantId])
+}
+
 model Wishlist {
   id        String   @id @default(uuid())
   sessionId String
@@ -68,6 +115,33 @@ model Wishlist {
   createdAt DateTime @default(now())
 
   @@unique([sessionId, productId])
+}
+
+model Coupon {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  discount  Float
+  type      String   @default("percentage") // "percentage" or "fixed"
+  minAmount Float    @default(0)
+  maxUses   Int      @default(100)
+  usedCount Int      @default(0)
+  expiresAt DateTime?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String?
+  phone     String   @unique
+  email     String?
+  address   String?
+  totalSpent Float   @default(0)
+  orderCount Int     @default(0)
+  lastOrderAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Testimonial {
