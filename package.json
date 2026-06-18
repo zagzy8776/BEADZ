@@ -101,12 +101,6 @@
     "overrides": {
       "vite": "6.3.5"
     },
-    "onlyBuiltDependencies": [
-      "@prisma/client",
-      "@prisma/engines",
-      "@tailwindcss/oxide",
-      "esbuild",
-      "prisma"
-    ]
+    "onlyBuiltDependencies": ["*"]
   }
 }
