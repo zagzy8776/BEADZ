@@ -1,0 +1,451 @@
+import { useState, useEffect } from "react";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+type Tab = "products" | "orders" | "testimonials" | "gallery";
+
+interface Props {
+  token: string;
+  onLogout: () => void;
+}
+
+export function AdminDashboard({ token, onLogout }: Props) {
+  const [tab, setTab] = useState<Tab>("products");
+  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#f7efe4" }}>
+      {/* Top Bar */}
+      <div style={{
+        background: "#1C120C",
+        color: "white",
+        padding: "16px 24px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+      }}>
+        <div>
+          <h1 style={{ fontFamily: "serif", fontSize: "1.3rem", margin: 0 }}>Admin Dashboard</h1>
+          <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#FF9500" }}>Evangel Collectibles</p>
+        </div>
+        <button onClick={onLogout} style={{
+          background: "transparent",
+          border: "1px solid rgba(255,255,255,0.3)",
+          color: "white",
+          padding: "8px 20px",
+          borderRadius: "8px",
+          cursor: "pointer",
+          fontSize: "0.85rem",
+        }}>Logout</button>
+      </div>
+
+      {/* Tab Navigation */}
+      <div style={{ display: "flex", gap: 0, borderBottom: "2px solid #e0d5c8", padding: "0 24px", background: "white" }}>
+        {(["products", "orders", "testimonials", "gallery"] as Tab[]).map((t) => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            padding: "14px 24px",
+            background: "transparent",
+            border: "none",
+            borderBottom: tab === t ? "3px solid #FF9500" : "3px solid transparent",
+            color: tab === t ? "#FF9500" : "#76675b",
+            fontWeight: tab === t ? "bold" : "normal",
+            cursor: "pointer",
+            textTransform: "capitalize",
+            fontSize: "0.9rem",
+          }}>
+            {t} {t === "orders" ? "📋" : t === "products" ? "📦" : t === "testimonials" ? "⭐" : "🖼️"}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+        {tab === "products" && <ProductsPanel token={token} headers={headers} />}
+        {tab === "orders" && <OrdersPanel token={token} headers={headers} />}
+        {tab === "testimonials" && <TestimonialsPanel token={token} headers={headers} />}
+        {tab === "gallery" && <GalleryPanel token={token} headers={headers} />}
+      </div>
+    </div>
+  );
+}
+
+// ============= PRODUCTS PANEL =============
+function ProductsPanel({ token, headers }: { token: string; headers: Record<string, string> }) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    setLoading(true);
+    const [p, c] = await Promise.all([
+      fetch(`${API_BASE}/api/admin/products`, { headers }).then(r => r.json()),
+      fetch(`${API_BASE}/api/admin/categories`, { headers }).then(r => r.json()),
+    ]);
+    setProducts(p);
+    setCategories(c);
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function deleteProduct(id: string) {
+    if (!confirm("Delete this product?")) return;
+    await fetch(`${API_BASE}/api/admin/products/${id}`, { method: "DELETE", headers });
+    load();
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <h2 style={{ margin: 0, fontFamily: "serif" }}>Products ({products.length})</h2>
+        <button onClick={() => setEditing({})} style={{
+          background: "#FF9500", color: "white", border: "none", padding: "10px 24px",
+          borderRadius: "10px", fontWeight: "bold", cursor: "pointer",
+        }}>+ Add Product</button>
+      </div>
+
+      {/* Product Form */}
+      {editing !== null && (
+        <ProductForm
+          product={editing}
+          categories={categories}
+          onSave={async (data) => {
+            const isNew = !editing.id;
+            const url = isNew
+              ? `${API_BASE}/api/admin/products`
+              : `${API_BASE}/api/admin/products/${editing.id}`;
+            const method = isNew ? "POST" : "PUT";
+            await fetch(url, { method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(data) });
+            setEditing(null);
+            load();
+          }}
+          onCancel={() => setEditing(null)}
+          token={token}
+        />
+      )}
+
+      {loading ? <p>Loading products...</p> : (
+        <div style={{ display: "grid", gap: "12px" }}>
+          {products.map((p: any) => (
+            <div key={p.id} style={{
+              background: "white", borderRadius: "12px", padding: "16px 20px",
+              display: "flex", alignItems: "center", gap: "16px", border: "1px solid #e0d5c8",
+            }}>
+              <img src={p.image} alt={p.name} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: "8px", background: "#eadbc7" }}
+                onError={(e) => { (e.target as HTMLImageElement).src = "/evangel.jpeg"; }} />
+              <div style={{ flex: 1 }}>
+                <strong>{p.name}</strong>
+                <p style={{ margin: "2px 0", color: "#76675b", fontSize: "0.85rem" }}>{p.subtitle}</p>
+                <span style={{ color: "#FF9500", fontWeight: "bold" }}>₦{p.price.toLocaleString()}</span>
+                <span style={{ marginLeft: 12, fontSize: "0.8rem", color: p.inStock ? "#16a34a" : "#dc2626" }}>
+                  {p.inStock ? "In Stock" : "Out of Stock"}
+                </span>
+              </div>
+              <button onClick={() => setEditing(p)} style={{ padding: "6px 16px", borderRadius: "8px", border: "1px solid #e0d5c8", background: "white", cursor: "pointer" }}>Edit</button>
+              <button onClick={() => deleteProduct(p.id)} style={{ padding: "6px 16px", borderRadius: "8px", border: "1px solid #dc2626", color: "#dc2626", background: "white", cursor: "pointer" }}>Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProductForm({ product, categories, onSave, onCancel, token }: {
+  product: any;
+  categories: any[];
+  onSave: (data: any) => void;
+  onCancel: () => void;
+  token: string;
+}) {
+  const [form, setForm] = useState({
+    name: product.name || "",
+    subtitle: product.subtitle || "",
+    price: product.price || "",
+    categoryId: product.categoryId || categories[0]?.id || "",
+    badge: product.badge || "",
+    image: product.image || "",
+    inStock: product.inStock !== false,
+    description: product.description || "",
+  });
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("image", file);
+    const res = await fetch(`${API_BASE}/api/admin/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const data = await res.json();
+    setForm(f => ({ ...f, image: data.fullUrl }));
+    setUploading(false);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSave({ ...form, price: parseFloat(form.price as string) || 0 });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{
+      background: "white", padding: "24px", borderRadius: "16px",
+      marginBottom: "20px", border: "2px solid #FF9500",
+    }}>
+      <h3 style={{ margin: "0 0 16px" }}>{product.id ? "Edit Product" : "New Product"}</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <input placeholder="Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+          style={inputStyle} required />
+        <input placeholder="Subtitle" value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
+          style={inputStyle} required />
+        <input placeholder="Price (₦)" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+          style={inputStyle} required />
+        <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} style={inputStyle}>
+          {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <input placeholder="Badge (e.g. Bestseller)" value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))}
+          style={inputStyle} />
+        <label style={{ display: "flex", alignItems: "center", gap: 8, ...inputStyle, cursor: "pointer" }}>
+          <input type="checkbox" checked={form.inStock} onChange={e => setForm(f => ({ ...f, inStock: e.target.checked }))} />
+          In Stock
+        </label>
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <input type="file" accept="image/*" onChange={handleUpload} style={{ fontSize: "0.85rem" }} />
+        {uploading && <span style={{ color: "#FF9500", marginLeft: 8 }}>Uploading...</span>}
+        {form.image && (
+          <img src={form.image} alt="" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, marginTop: 8, display: "block" }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+        )}
+      </div>
+
+      <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
+        <button type="submit" style={{
+          background: "#FF9500", color: "white", border: "none", padding: "12px 32px",
+          borderRadius: "10px", fontWeight: "bold", cursor: "pointer",
+        }}>Save Product</button>
+        <button type="button" onClick={onCancel} style={{
+          background: "white", color: "#666", border: "1px solid #e0d5c8", padding: "12px 32px",
+          borderRadius: "10px", cursor: "pointer",
+        }}>Cancel</button>
+      </div>
+    </form>
+  );
+}
+
+// ============= ORDERS PANEL =============
+function OrdersPanel({ headers }: { token: string; headers: Record<string, string> }) {
+  const [orders, setOrders] = useState<any[]>([]);
+  useEffect(() => {
+    fetch(`${API_BASE}/api/admin/orders`, { headers }).then(r => r.json()).then(setOrders);
+  }, []);
+
+  async function updateStatus(id: string, status: string) {
+    await fetch(`${API_BASE}/api/admin/orders/${id}`, {
+      method: "PUT", headers, body: JSON.stringify({ status }),
+    });
+    setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontFamily: "serif" }}>Orders ({orders.length})</h2>
+      {orders.length === 0 ? <p>No orders yet.</p> : (
+        <div style={{ display: "grid", gap: "12px" }}>
+          {orders.map((o: any) => (
+            <div key={o.id} style={{ background: "white", borderRadius: "12px", padding: "16px 20px", border: "1px solid #e0d5c8" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div>
+                  <strong>Order #{o.id.slice(0, 8)}</strong>
+                  <span style={{ marginLeft: 12, fontSize: "0.85rem", color: "#76675b" }}>
+                    {new Date(o.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <select value={o.status} onChange={e => updateStatus(o.id, e.target.value)}
+                  style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid #e0d5c8" }}>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              {o.phone && <p style={{ margin: "8px 0 0", fontSize: "0.9rem" }}>📞 {o.phone}</p>}
+              <p style={{ margin: "4px 0 0", color: "#FF9500", fontWeight: "bold" }}>Total: ₦{o.total?.toLocaleString() || "0"}</p>
+              {o.summary && <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#76675b" }}>{o.summary}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============= TESTIMONIALS PANEL =============
+function TestimonialsPanel({ token, headers }: { token: string; headers: Record<string, string> }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [editing, setEditing] = useState<any | null>(null);
+
+  async function load() {
+    const data = await fetch(`${API_BASE}/api/admin/testimonials`, { headers }).then(r => r.json());
+    setItems(data);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function deleteItem(id: string) {
+    if (!confirm("Delete this testimonial?")) return;
+    await fetch(`${API_BASE}/api/admin/testimonials/${id}`, { method: "DELETE", headers });
+    load();
+  }
+
+  async function save(data: any) {
+    const isNew = !editing?.id;
+    const url = isNew ? `${API_BASE}/api/admin/testimonials` : `${API_BASE}/api/admin/testimonials/${editing.id}`;
+    const method = isNew ? "POST" : "PUT";
+    await fetch(url, { method, headers, body: JSON.stringify(data) });
+    setEditing(null);
+    load();
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2 style={{ margin: 0, fontFamily: "serif" }}>Testimonials ({items.length})</h2>
+        <button onClick={() => setEditing({})} style={{ background: "#FF9500", color: "white", border: "none", padding: "10px 24px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>+ Add</button>
+      </div>
+
+      {editing !== null && (
+        <div style={{ background: "white", padding: 24, borderRadius: 16, marginBottom: 20, border: "2px solid #FF9500" }}>
+          <input placeholder="Name" value={editing.name || ""} onChange={e => setEditing({ ...editing, name: e.target.value })}
+            style={{ ...inputStyle, marginBottom: 8 }} />
+          <input placeholder="Role (e.g. Traditional bride)" value={editing.role || ""}
+            onChange={e => setEditing({ ...editing, role: e.target.value })} style={{ ...inputStyle, marginBottom: 8 }} />
+          <textarea placeholder="Quote" value={editing.quote || ""} rows={3}
+            onChange={e => setEditing({ ...editing, quote: e.target.value })} style={{ ...inputStyle, marginBottom: 8 }} />
+          <input placeholder="Rating (1-5)" type="number" min={1} max={5} value={editing.rating || 5}
+            onChange={e => setEditing({ ...editing, rating: parseInt(e.target.value) || 5 })} style={{ ...inputStyle, marginBottom: 12, width: 100 }} />
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={() => save(editing)}
+              style={{ background: "#FF9500", color: "white", border: "none", padding: "10px 24px", borderRadius: 10, fontWeight: "bold", cursor: "pointer" }}>
+              {editing.id ? "Update" : "Add"} Testimonial
+            </button>
+            <button onClick={() => setEditing(null)}
+              style={{ background: "white", color: "#666", border: "1px solid #e0d5c8", padding: "10px 24px", borderRadius: 10, cursor: "pointer" }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gap: 12 }}>
+        {items.map((t: any) => (
+          <div key={t.id} style={{ background: "white", borderRadius: 12, padding: "16px 20px", border: "1px solid #e0d5c8" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div>
+                <strong>{t.name}</strong> {t.role && <span style={{ color: "#76675b", fontSize: "0.85rem" }}>— {t.role}</span>}
+                <p style={{ margin: "4px 0 0", fontStyle: "italic" }}>"{t.quote}"</p>
+                <p style={{ margin: "4px 0 0", color: "#FF9500" }}>{"★".repeat(t.rating)}</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setEditing(t)} style={{ padding: "6px 16px", borderRadius: 8, border: "1px solid #e0d5c8", background: "white", cursor: "pointer" }}>Edit</button>
+                <button onClick={() => deleteItem(t.id)} style={{ padding: "6px 16px", borderRadius: 8, border: "1px solid #dc2626", color: "#dc2626", background: "white", cursor: "pointer" }}>Delete</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============= GALLERY PANEL =============
+function GalleryPanel({ token, headers }: { token: string; headers: Record<string, string> }) {
+  const [images, setImages] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  async function load() {
+    const data = await fetch(`${API_BASE}/api/admin/gallery`, { headers }).then(r => r.json());
+    setImages(data);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const fd = new FormData();
+    for (let i = 0; i < files.length; i++) fd.append("images", files[i]);
+    const res = await fetch(`${API_BASE}/api/admin/upload-multiple`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const { images: uploaded } = await res.json();
+    // Save each uploaded image to gallery
+    for (const img of uploaded) {
+      await fetch(`${API_BASE}/api/admin/gallery`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ url: img.fullUrl, caption: "", section: "lookbook", sortOrder: 0 }),
+      });
+    }
+    setUploading(false);
+    load();
+  }
+
+  async function deleteImage(id: string) {
+    if (!confirm("Delete this image?")) return;
+    await fetch(`${API_BASE}/api/admin/gallery/${id}`, { method: "DELETE", headers });
+    load();
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2 style={{ margin: 0, fontFamily: "serif" }}>Gallery ({images.length})</h2>
+        <label style={{ background: "#FF9500", color: "white", padding: "10px 24px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", display: "inline-block" }}>
+          {uploading ? "Uploading..." : "+ Upload Images"}
+          <input type="file" multiple accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
+        </label>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "16px" }}>
+        {images.map((img: any) => (
+          <div key={img.id} style={{ position: "relative", borderRadius: "12px", overflow: "hidden", background: "#eadbc7", aspectRatio: "4/3" }}>
+            <img src={img.url} alt={img.caption || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={(e) => { (e.target as HTMLImageElement).src = "/evangel.jpeg"; }} />
+            <button onClick={() => deleteImage(img.id)} style={{
+              position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.6)", color: "white",
+              border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: "1rem",
+            }}>×</button>
+            {img.caption && <p style={{
+              position: "absolute", bottom: 0, left: 0, right: 0, margin: 0, padding: "8px",
+              background: "rgba(0,0,0,0.5)", color: "white", fontSize: "0.8rem",
+            }}>{img.caption}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  padding: "10px 14px",
+  border: "2px solid #e0d5c8",
+  borderRadius: "10px",
+  fontSize: "0.9rem",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+};

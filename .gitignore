@@ -43,3 +43,10 @@ coverage/
 .cache/
 tmp/
 prisma/migrations/
+uploads/*.jpg
+uploads/*.png
+uploads/*.gif
+uploads/*.webp
+uploads/*.jpeg
+uploads/*.svg
+!uploads/.gitkeep
