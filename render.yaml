@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: beadz-api
+    runtime: node
+    region: singapore
+    buildCommand: corepack enable && pnpm install && npx prisma generate && npx prisma db push
+    startCommand: pnpm server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
