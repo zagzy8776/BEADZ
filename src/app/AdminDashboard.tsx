@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Image, LogOut, MessageSquareQuote, Package, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Image, LogOut, MessageSquareQuote, Package, Plus, ShoppingBag, Trash2, UploadCloud, X } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -208,6 +208,7 @@ function ProductForm({ product, categories, onSave, onCancel, token }: {
     description: product.description || "",
   });
   const [uploading, setUploading] = useState(false);
+  const isEditing = Boolean(product.id);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -232,46 +233,152 @@ function ProductForm({ product, categories, onSave, onCancel, token }: {
 
   return (
     <form onSubmit={handleSubmit} style={{
-      background: "white", padding: "24px", borderRadius: "16px",
-      marginBottom: "20px", border: "2px solid #FF9500",
+      background: "white",
+      padding: 0,
+      borderRadius: "20px",
+      marginBottom: "22px",
+      border: "1px solid rgba(255,149,0,0.55)",
+      boxShadow: "0 24px 70px rgba(50, 26, 14, 0.12)",
+      overflow: "hidden",
     }}>
-      <h3 style={{ margin: "0 0 16px" }}>{product.id ? "Edit Product" : "New Product"}</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-        <input placeholder="Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-          style={inputStyle} required />
-        <input placeholder="Subtitle" value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
-          style={inputStyle} required />
-        <input placeholder="Price (₦)" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-          style={inputStyle} required />
-        <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} style={inputStyle}>
-          {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <input placeholder="Badge (e.g. Bestseller)" value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))}
-          style={inputStyle} />
-        <label style={{ display: "flex", alignItems: "center", gap: 8, ...inputStyle, cursor: "pointer" }}>
-          <input type="checkbox" checked={form.inStock} onChange={e => setForm(f => ({ ...f, inStock: e.target.checked }))} />
-          In Stock
-        </label>
+      <div style={{
+        padding: "18px 22px",
+        borderBottom: "1px solid #eadbc7",
+        background: "#FFF8ED",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 16,
+      }}>
+        <div>
+          <p style={eyebrowStyle}>{isEditing ? "Update catalogue item" : "Create catalogue item"}</p>
+          <h3 style={{ margin: 0, fontFamily: "serif", fontSize: "1.65rem", lineHeight: 1 }}>
+            {isEditing ? `Edit ${product.name || "Product"}` : "Add New Product"}
+          </h3>
+        </div>
+        <button type="button" onClick={onCancel} aria-label="Close product editor" style={iconButtonStyle}>
+          <X size={18} />
+        </button>
       </div>
 
-      <div style={{ marginTop: 12 }}>
-        <input type="file" accept="image/*" onChange={handleUpload} style={{ fontSize: "0.85rem" }} />
-        {uploading && <span style={{ color: "#FF9500", marginLeft: 8 }}>Uploading...</span>}
-        {form.image && (
-          <img src={form.image} alt="" style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, marginTop: 8, display: "block" }}
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-        )}
-      </div>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: 0,
+      }}>
+        <div style={{
+          padding: "22px",
+          background: "#1C120C",
+          color: "white",
+        }}>
+          <p style={{ margin: "0 0 10px", color: "#FFB24A", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            Product photo
+          </p>
+          <label style={{
+            display: "grid",
+            placeItems: "center",
+            minHeight: 310,
+            borderRadius: 18,
+            border: "1px dashed rgba(255,255,255,0.35)",
+            background: "rgba(255,255,255,0.08)",
+            overflow: "hidden",
+            cursor: "pointer",
+            position: "relative",
+          }}>
+            {form.image ? (
+              <img
+                src={form.image}
+                alt={form.name || "Product preview"}
+                style={{ width: "100%", height: "100%", minHeight: 310, objectFit: "cover" }}
+                onError={(e) => { (e.target as HTMLImageElement).src = "/evangel.jpeg"; }}
+              />
+            ) : (
+              <div style={{ textAlign: "center", padding: 24 }}>
+                <UploadCloud size={38} style={{ color: "#FF9500", marginBottom: 12 }} />
+                <p style={{ margin: "0 0 6px", fontWeight: 900 }}>Upload product photo</p>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.62)", fontSize: "0.82rem", lineHeight: 1.6 }}>
+                  Use a clear square or portrait image.
+                </p>
+              </div>
+            )}
+            <input type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
+          </label>
+          <div style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+            <label style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 999,
+              background: "#FF9500",
+              color: "white",
+              padding: "10px 15px",
+              fontSize: "0.82rem",
+              fontWeight: 900,
+              cursor: "pointer",
+            }}>
+              <UploadCloud size={16} /> {form.image ? "Change photo" : "Choose photo"}
+              <input type="file" accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
+            </label>
+            {uploading && <span style={{ color: "#FFB24A", fontSize: "0.82rem", fontWeight: 800 }}>Uploading...</span>}
+          </div>
+        </div>
 
-      <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-        <button type="submit" style={{
-          background: "#FF9500", color: "white", border: "none", padding: "12px 32px",
-          borderRadius: "10px", fontWeight: "bold", cursor: "pointer",
-        }}>Save Product</button>
-        <button type="button" onClick={onCancel} style={{
-          background: "white", color: "#666", border: "1px solid #e0d5c8", padding: "12px 32px",
-          borderRadius: "10px", cursor: "pointer",
-        }}>Cancel</button>
+        <div style={{ padding: "22px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+            <Field label="Product name">
+              <input placeholder="e.g. Writ and ankle set" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                style={inputStyle} required />
+            </Field>
+            <Field label="Price">
+              <input placeholder="48000" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                style={inputStyle} required />
+            </Field>
+            <Field label="Short subtitle">
+              <input placeholder="Brief customer-facing description" value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
+                style={inputStyle} required />
+            </Field>
+            <Field label="Category">
+              <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} style={inputStyle}>
+                {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Badge">
+              <input placeholder="Bestseller, New, Limited" value={form.badge} onChange={e => setForm(f => ({ ...f, badge: e.target.value }))}
+                style={inputStyle} />
+            </Field>
+            <Field label="Availability">
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, ...inputStyle, cursor: "pointer" }}>
+                <span style={{ fontWeight: 800, color: "#321A0E" }}>{form.inStock ? "In Stock" : "Out of Stock"}</span>
+                <input type="checkbox" checked={form.inStock} onChange={e => setForm(f => ({ ...f, inStock: e.target.checked }))} />
+              </label>
+            </Field>
+          </div>
+
+          <Field label="Product details" style={{ marginTop: 14 }}>
+            <textarea
+              placeholder="Add sizing, materials, rental notes, or what comes with the product."
+              value={form.description}
+              rows={4}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              style={{ ...inputStyle, resize: "vertical", minHeight: 110 }}
+            />
+          </Field>
+
+          <div style={{
+            marginTop: 18,
+            paddingTop: 18,
+            borderTop: "1px solid #eadbc7",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 12,
+            flexWrap: "wrap",
+          }}>
+            <button type="button" onClick={onCancel} style={secondaryButtonStyle}>Cancel</button>
+            <button type="submit" style={primaryButtonStyle}>
+              {isEditing ? "Save Changes" : "Publish Product"}
+            </button>
+          </div>
+        </div>
       </div>
     </form>
   );
@@ -501,6 +608,15 @@ function MetricCard({ label, value }: { label: string; value: number }) {
   );
 }
 
+function Field({ label, children, style }: { label: string; children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <label style={{ display: "grid", gap: 7, ...style }}>
+      <span style={{ color: "#76675b", fontSize: "0.74rem", fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase" }}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
 const sectionHeaderStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
@@ -573,6 +689,18 @@ const dangerButtonStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
+};
+
+const iconButtonStyle: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  borderRadius: "999px",
+  border: "1px solid #e0d5c8",
+  background: "white",
+  color: "#321A0E",
+  cursor: "pointer",
+  display: "grid",
+  placeItems: "center",
 };
 
 const mutedStateStyle: React.CSSProperties = {
