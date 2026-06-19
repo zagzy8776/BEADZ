@@ -19,12 +19,8 @@ import type { ReactNode } from "react";
 import {
   fetchProducts,
   fetchCategories,
-  fetchTestimonials,
-  fetchGallery,
   type Product,
   type Category,
-  type Testimonial,
-  type GalleryImage,
   productWhatsApp,
   shareWhatsApp,
   getSessionId,
@@ -374,76 +370,10 @@ function QuoteCard({ icon, title, points, href, label }: { icon: ReactNode; titl
   );
 }
 
-function LookbookTestimonials() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.all([fetchTestimonials(), fetchGallery("lookbook")])
-      .then(([t, g]) => { setTestimonials(t); setGalleryImages(g); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const placeholderImages = galleryImages.length > 0 ? galleryImages : [
-    { id: "1", url: "/evangel.jpeg", caption: "Bridal corner" },
-    { id: "2", url: "/evangel.jpeg", caption: "Attire rack" },
-    { id: "3", url: "/evangel.jpeg", caption: "Kids rentals" },
-    { id: "4", url: "/evangel.jpeg", caption: "Event setup" },
-  ] as GalleryImage[];
-
-  return (
-    <section className="bg-[#f7efe4] px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <SectionTitle
-          eyebrow="Lookbook & Reviews"
-          title="Real customers, real moments."
-          copy="Upload your shop photos and customer reviews from the admin dashboard."
-        />
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-          {/* Gallery */}
-          <div className="grid grid-cols-2 gap-4">
-            {placeholderImages.slice(0, 4).map((img, i) => (
-              <div key={img.id} className={`relative overflow-hidden rounded-[1.5rem] bg-[#321A0E] ${i === 0 ? "row-span-2" : ""}`}>
-                <img
-                  src={img.url}
-                  alt={img.caption || ""}
-                  className="h-full min-h-[210px] w-full object-cover opacity-80 blur-[0.45px]"
-                  onError={(e) => { (e.target as HTMLImageElement).src = "/evangel.jpeg"; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-                <p className="absolute bottom-4 left-4 font-serif text-2xl font-black text-white">{img.caption || "Store view"}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Testimonials */}
-          <div className="grid gap-4">
-            {loading ? (
-              <p className="text-[#76675b]">Loading reviews...</p>
-            ) : testimonials.length > 0 ? (
-              testimonials.map((t) => (
-                <article key={t.id} className="rounded-[1.5rem] border border-[#321A0E]/10 bg-[#FFFDF9] p-6">
-                  <p className="text-[#FF9500] mb-2">{Array.from({ length: t.rating }, () => "★").join("")}</p>
-                  <p className="font-serif text-2xl font-black leading-tight text-[#241209]">“{t.quote}”</p>
-                  <p className="mt-4 text-sm font-black text-[#E68500]">{t.name}</p>
-                  {t.role && <p className="text-xs uppercase tracking-[0.2em] text-[#76675b]">{t.role}</p>}
-                </article>
-              ))
-            ) : (
-              <p className="text-[#76675b] text-sm italic">No reviews yet. Add them from the admin dashboard.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ContactFooter() {
   return (
     <footer className="bg-[#1C120C] px-4 pb-24 pt-14 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1fr_1.2fr] md:items-end">
+      <div className="mx-auto max-w-7xl">
         <div>
           <p className="text-[0.7rem] font-black uppercase tracking-[0.34em] text-[#FF9500]">Visit the store</p>
           <h2 className="mt-3 font-serif text-4xl font-black tracking-[-0.04em]">Evangel Collectibles, Owerri</h2>
@@ -484,15 +414,6 @@ function ContactFooter() {
           </div>
         </div>
 
-        {/* Get Directions */}
-        <a href={GOOGLE_MAPS_DIR} target="_blank" rel="noreferrer"
-          className="flex items-center justify-center gap-3 rounded-[2rem] border border-white/10 bg-white/10 p-8 text-white no-underline transition-all hover:bg-white/20">
-          <MapIcon size={28} />
-          <div>
-            <p className="text-lg font-bold">Get Directions</p>
-            <p className="text-sm text-white/60">Open in Google Maps →</p>
-          </div>
-        </a>
       </div>
 
       {/* Bottom section */}
@@ -537,7 +458,6 @@ export default function App() {
       <Catalogue />
       <Services />
       <BookingForms />
-      <LookbookTestimonials />
       <ContactFooter />
       <FloatingActions />
     </main>
