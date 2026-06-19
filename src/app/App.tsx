@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   ArrowRight,
-  CalendarDays,
-  CheckCircle2,
-  Heart,
   Instagram,
   Mail,
   MapPin,
@@ -15,17 +12,12 @@ import {
   Star,
   Map as MapIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
 import {
   fetchProducts,
   fetchCategories,
   type Product,
   type Category,
   productWhatsApp,
-  shareWhatsApp,
-  getSessionId,
-  addToCart,
-  type CartItem,
   SOCIAL,
   GOOGLE_MAPS_DIR,
 } from "./api.ts";
@@ -319,57 +311,6 @@ function Services() {
   );
 }
 
-function BookingForms() {
-  const rentalMsg = wa("Hello Evangel Collectibles, I want to book a rental. Event type: __. Date: __. Adult/Kid: __. Size/Age: __. Pickup date: __. Return date: __.");
-  const cateringMsg = wa("Hello Evangel Collectibles, I need an outdoor catering quote. Event date: __. Location: __. Guest count: __. Menu style: __. Budget range: __.");
-  return (
-    <section className="bg-[#FFFDF9] px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <SectionTitle
-          eyebrow="Fast booking"
-          title="Rental booking and catering quote requests."
-          copy="Buttons open WhatsApp with prepared messages — just fill in your details and send."
-        />
-        <div className="grid gap-5 lg:grid-cols-2">
-          <QuoteCard
-            icon={<CalendarDays />}
-            title="Book cultural attire rental"
-            points={["Event date and type", "Adult or child sizing", "Pickup and return date", "Photoshoot, wedding, cultural day or ceremony"]}
-            href={rentalMsg}
-            label="Send rental request"
-          />
-          <QuoteCard
-            icon={<Sparkles />}
-            title="Request catering quote"
-            points={["Guest count and event location", "Traditional menu preference", "Outdoor buffet/service style", "Budget range and celebration date"]}
-            href={cateringMsg}
-            label="Send catering request"
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function QuoteCard({ icon, title, points, href, label }: { icon: ReactNode; title: string; points: string[]; href: string; label: string }) {
-  return (
-    <article className="rounded-[2rem] border border-[#321A0E]/10 bg-[#1C120C] p-7 text-white shadow-2xl shadow-[#321A0E]/15">
-      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#FF9500] text-white">{icon}</div>
-      <h3 className="font-serif text-4xl font-black tracking-[-0.04em]">{title}</h3>
-      <div className="mt-6 grid gap-3">
-        {points.map((p) => (
-          <p key={p} className="flex items-center gap-3 text-sm text-white/75">
-            <CheckCircle2 size={17} className="text-[#FF9500]" />{p}
-          </p>
-        ))}
-      </div>
-      <a href={href} target="_blank" rel="noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-4 font-black text-white no-underline transition-all duration-300 hover:scale-105">
-        {label} <MessageCircle size={18} />
-      </a>
-    </article>
-  );
-}
-
 function ContactFooter() {
   return (
     <footer className="bg-[#1C120C] px-4 pb-24 pt-14 text-white sm:px-6 lg:px-8">
@@ -457,7 +398,6 @@ export default function App() {
       <Hero />
       <Catalogue />
       <Services />
-      <BookingForms />
       <ContactFooter />
       <FloatingActions />
     </main>
