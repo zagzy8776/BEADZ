@@ -39,6 +39,7 @@ function wa(message: string) {
 }
 
 const heroWhatsApp = wa("Hello Evangel Collectibles, I would like to shop, rent, or request event catering.");
+const PRODUCTS_PER_PAGE = 9;
 
 function Header() {
   return (
@@ -112,6 +113,7 @@ function Catalogue() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -123,6 +125,16 @@ function Catalogue() {
   const filtered = activeCategory === "all"
     ? products
     : products.filter(p => p.category.slug === activeCategory);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCTS_PER_PAGE));
+  const pageProducts = filtered.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   return (
     <section id="catalogue" className="bg-[#FFFDF9] px-4 py-20 sm:px-6 lg:px-8">
@@ -172,8 +184,8 @@ function Catalogue() {
         {loading ? (
           <p className="text-center text-[#76675b] py-12">Loading products...</p>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((product) => (
+          <div className="grid gap-5 md:grid-cols-3">
+            {pageProducts.map((product) => (
               <article key={product.id} className="group overflow-hidden rounded-[1.8rem] border border-[#321A0E]/10 bg-white shadow-[0_18px_60px_rgba(50,26,14,0.08)] transition-all duration-300 hover:-translate-y-1">
                 <div className="relative aspect-[4/3] overflow-hidden bg-[#eadbc7]">
                   <img
@@ -213,6 +225,43 @@ function Catalogue() {
                 </div>
               </article>
             ))}
+          </div>
+        )}
+
+        {!loading && filtered.length > PRODUCTS_PER_PAGE && (
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-[#321A0E]/10 pt-6 sm:flex-row">
+            <p className="text-sm font-bold text-[#76675b]">
+              Showing {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}-{Math.min(currentPage * PRODUCTS_PER_PAGE, filtered.length)} of {filtered.length} products
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="rounded-full border border-[#321A0E]/15 px-4 py-2 text-sm font-black text-[#321A0E] transition disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`h-10 w-10 rounded-full text-sm font-black transition ${
+                    page === currentPage
+                      ? "bg-[#FF9500] text-white"
+                      : "border border-[#321A0E]/15 text-[#321A0E] hover:border-[#FF9500]"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded-full border border-[#321A0E]/15 px-4 py-2 text-sm font-black text-[#321A0E] transition disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
 

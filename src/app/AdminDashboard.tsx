@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
+import { Image, LogOut, MessageSquareQuote, Package, Plus, ShoppingBag, Trash2 } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 type Tab = "products" | "orders" | "testimonials" | "gallery";
+const tabMeta: Record<Tab, { label: string; icon: React.ReactNode }> = {
+  products: { label: "Products", icon: <Package size={16} /> },
+  orders: { label: "Orders", icon: <ShoppingBag size={16} /> },
+  testimonials: { label: "Testimonials", icon: <MessageSquareQuote size={16} /> },
+  gallery: { label: "Gallery", icon: <Image size={16} /> },
+};
 
 interface Props {
   token: string;
@@ -14,51 +21,61 @@ export function AdminDashboard({ token, onLogout }: Props) {
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f7efe4" }}>
+    <div style={{ minHeight: "100vh", background: "#f7efe4", color: "#241209" }}>
       {/* Top Bar */}
       <div style={{
         background: "#1C120C",
         color: "white",
-        padding: "16px 24px",
+        padding: "18px 24px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         position: "sticky",
         top: 0,
         zIndex: 50,
+        boxShadow: "0 10px 30px rgba(28, 18, 12, 0.18)",
       }}>
         <div>
-          <h1 style={{ fontFamily: "serif", fontSize: "1.3rem", margin: 0 }}>Admin Dashboard</h1>
-          <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#FF9500" }}>Evangel Collectibles</p>
+          <p style={{ margin: "0 0 4px", fontSize: "0.68rem", color: "#FFB24A", fontWeight: 800, letterSpacing: "0.24em", textTransform: "uppercase" }}>Evangel Collectibles</p>
+          <h1 style={{ fontFamily: "serif", fontSize: "1.55rem", margin: 0, lineHeight: 1 }}>Admin Dashboard</h1>
         </div>
         <button onClick={onLogout} style={{
-          background: "transparent",
+          background: "rgba(255,255,255,0.08)",
           border: "1px solid rgba(255,255,255,0.3)",
           color: "white",
-          padding: "8px 20px",
-          borderRadius: "8px",
+          padding: "10px 16px",
+          borderRadius: "999px",
           cursor: "pointer",
           fontSize: "0.85rem",
-        }}>Logout</button>
+          fontWeight: 800,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+        }}><LogOut size={16} /> Logout</button>
       </div>
 
       {/* Tab Navigation */}
-      <div style={{ display: "flex", gap: 0, borderBottom: "2px solid #e0d5c8", padding: "0 24px", background: "white" }}>
+      <div style={{ borderBottom: "1px solid #e0d5c8", background: "rgba(255,255,255,0.82)", backdropFilter: "blur(14px)" }}>
+        <div style={{ display: "flex", gap: 8, padding: "12px 24px", overflowX: "auto", maxWidth: "1200px", margin: "0 auto" }}>
         {(["products", "orders", "testimonials", "gallery"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: "14px 24px",
-            background: "transparent",
-            border: "none",
-            borderBottom: tab === t ? "3px solid #FF9500" : "3px solid transparent",
-            color: tab === t ? "#FF9500" : "#76675b",
-            fontWeight: tab === t ? "bold" : "normal",
+            padding: "11px 16px",
+            background: tab === t ? "#1C120C" : "transparent",
+            border: tab === t ? "1px solid #1C120C" : "1px solid #e0d5c8",
+            borderRadius: "999px",
+            color: tab === t ? "white" : "#76675b",
+            fontWeight: 800,
             cursor: "pointer",
-            textTransform: "capitalize",
             fontSize: "0.9rem",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            whiteSpace: "nowrap",
           }}>
-            {t} {t === "orders" ? "📋" : t === "products" ? "📦" : t === "testimonials" ? "⭐" : "🖼️"}
+            {tabMeta[t].icon} {tabMeta[t].label}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -100,12 +117,23 @@ function ProductsPanel({ token, headers }: { token: string; headers: Record<stri
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h2 style={{ margin: 0, fontFamily: "serif" }}>Products ({products.length})</h2>
+      <div style={sectionHeaderStyle}>
+        <div>
+          <p style={eyebrowStyle}>Catalogue manager</p>
+          <h2 style={sectionTitleStyle}>Products ({products.length})</h2>
+        </div>
         <button onClick={() => setEditing({})} style={{
-          background: "#FF9500", color: "white", border: "none", padding: "10px 24px",
-          borderRadius: "10px", fontWeight: "bold", cursor: "pointer",
-        }}>+ Add Product</button>
+          ...primaryButtonStyle,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+        }}><Plus size={16} /> Add Product</button>
+      </div>
+
+      <div style={statsGridStyle}>
+        <MetricCard label="Total products" value={products.length} />
+        <MetricCard label="In stock" value={products.filter(p => p.inStock).length} />
+        <MetricCard label="Out of stock" value={products.filter(p => !p.inStock).length} />
       </div>
 
       {/* Product Form */}
@@ -128,25 +156,32 @@ function ProductsPanel({ token, headers }: { token: string; headers: Record<stri
         />
       )}
 
-      {loading ? <p>Loading products...</p> : (
+      {loading ? <p style={mutedStateStyle}>Loading products...</p> : products.length === 0 ? (
+        <p style={emptyStateStyle}>No products yet. Add the first product to start selling.</p>
+      ) : (
         <div style={{ display: "grid", gap: "12px" }}>
           {products.map((p: any) => (
             <div key={p.id} style={{
-              background: "white", borderRadius: "12px", padding: "16px 20px",
-              display: "flex", alignItems: "center", gap: "16px", border: "1px solid #e0d5c8",
+              ...rowCardStyle,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "16px",
             }}>
-              <img src={p.image} alt={p.name} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: "8px", background: "#eadbc7" }}
+              <img src={p.image} alt={p.name} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: "12px", background: "#eadbc7" }}
                 onError={(e) => { (e.target as HTMLImageElement).src = "/evangel.jpeg"; }} />
-              <div style={{ flex: 1 }}>
-                <strong>{p.name}</strong>
+              <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+                <strong style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</strong>
                 <p style={{ margin: "2px 0", color: "#76675b", fontSize: "0.85rem" }}>{p.subtitle}</p>
                 <span style={{ color: "#FF9500", fontWeight: "bold" }}>₦{p.price.toLocaleString()}</span>
-                <span style={{ marginLeft: 12, fontSize: "0.8rem", color: p.inStock ? "#16a34a" : "#dc2626" }}>
+                <span style={{ marginLeft: 12, fontSize: "0.78rem", color: p.inStock ? "#15803d" : "#dc2626", fontWeight: 800 }}>
                   {p.inStock ? "In Stock" : "Out of Stock"}
                 </span>
               </div>
-              <button onClick={() => setEditing(p)} style={{ padding: "6px 16px", borderRadius: "8px", border: "1px solid #e0d5c8", background: "white", cursor: "pointer" }}>Edit</button>
-              <button onClick={() => deleteProduct(p.id)} style={{ padding: "6px 16px", borderRadius: "8px", border: "1px solid #dc2626", color: "#dc2626", background: "white", cursor: "pointer" }}>Delete</button>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginLeft: "auto", flexWrap: "wrap" }}>
+                <button onClick={() => setEditing(p)} style={secondaryButtonStyle}>Edit</button>
+                <button onClick={() => deleteProduct(p.id)} style={dangerButtonStyle}><Trash2 size={14} /> Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -258,11 +293,16 @@ function OrdersPanel({ headers }: { token: string; headers: Record<string, strin
 
   return (
     <div>
-      <h2 style={{ fontFamily: "serif" }}>Orders ({orders.length})</h2>
-      {orders.length === 0 ? <p>No orders yet.</p> : (
+      <div style={sectionHeaderStyle}>
+        <div>
+          <p style={eyebrowStyle}>Customer requests</p>
+          <h2 style={sectionTitleStyle}>Orders ({orders.length})</h2>
+        </div>
+      </div>
+      {orders.length === 0 ? <p style={emptyStateStyle}>No orders yet.</p> : (
         <div style={{ display: "grid", gap: "12px" }}>
           {orders.map((o: any) => (
-            <div key={o.id} style={{ background: "white", borderRadius: "12px", padding: "16px 20px", border: "1px solid #e0d5c8" }}>
+            <div key={o.id} style={rowCardStyle}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <div>
                   <strong>Order #{o.id.slice(0, 8)}</strong>
@@ -279,7 +319,7 @@ function OrdersPanel({ headers }: { token: string; headers: Record<string, strin
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-              {o.phone && <p style={{ margin: "8px 0 0", fontSize: "0.9rem" }}>📞 {o.phone}</p>}
+              {o.phone && <p style={{ margin: "8px 0 0", fontSize: "0.9rem" }}>Phone: {o.phone}</p>}
               <p style={{ margin: "4px 0 0", color: "#FF9500", fontWeight: "bold" }}>Total: ₦{o.total?.toLocaleString() || "0"}</p>
               {o.summary && <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#76675b" }}>{o.summary}</p>}
             </div>
@@ -320,8 +360,11 @@ function TestimonialsPanel({ token, headers }: { token: string; headers: Record<
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontFamily: "serif" }}>Testimonials ({items.length})</h2>
-        <button onClick={() => setEditing({})} style={{ background: "#FF9500", color: "white", border: "none", padding: "10px 24px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer" }}>+ Add</button>
+        <div>
+          <p style={eyebrowStyle}>Social proof</p>
+          <h2 style={sectionTitleStyle}>Testimonials ({items.length})</h2>
+        </div>
+        <button onClick={() => setEditing({})} style={primaryButtonStyle}>Add</button>
       </div>
 
       {editing !== null && (
@@ -349,10 +392,10 @@ function TestimonialsPanel({ token, headers }: { token: string; headers: Record<
 
       <div style={{ display: "grid", gap: 12 }}>
         {items.map((t: any) => (
-          <div key={t.id} style={{ background: "white", borderRadius: 12, padding: "16px 20px", border: "1px solid #e0d5c8" }}>
+          <div key={t.id} style={rowCardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <div>
-                <strong>{t.name}</strong> {t.role && <span style={{ color: "#76675b", fontSize: "0.85rem" }}>— {t.role}</span>}
+                <strong>{t.name}</strong> {t.role && <span style={{ color: "#76675b", fontSize: "0.85rem" }}>- {t.role}</span>}
                 <p style={{ margin: "4px 0 0", fontStyle: "italic" }}>"{t.quote}"</p>
                 <p style={{ margin: "4px 0 0", color: "#FF9500" }}>{"★".repeat(t.rating)}</p>
               </div>
@@ -413,9 +456,12 @@ function GalleryPanel({ token, headers }: { token: string; headers: Record<strin
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ margin: 0, fontFamily: "serif" }}>Gallery ({images.length})</h2>
-        <label style={{ background: "#FF9500", color: "white", padding: "10px 24px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", display: "inline-block" }}>
-          {uploading ? "Uploading..." : "+ Upload Images"}
+        <div>
+          <p style={eyebrowStyle}>Lookbook media</p>
+          <h2 style={sectionTitleStyle}>Gallery ({images.length})</h2>
+        </div>
+        <label style={{ ...primaryButtonStyle, display: "inline-block" }}>
+          {uploading ? "Uploading..." : "Upload Images"}
           <input type="file" multiple accept="image/*" onChange={handleUpload} style={{ display: "none" }} />
         </label>
       </div>
@@ -439,6 +485,109 @@ function GalleryPanel({ token, headers }: { token: string; headers: Record<strin
     </div>
   );
 }
+
+function MetricCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={{
+      background: "white",
+      border: "1px solid #e0d5c8",
+      borderRadius: 16,
+      padding: "16px 18px",
+      boxShadow: "0 14px 40px rgba(50, 26, 14, 0.06)",
+    }}>
+      <p style={{ margin: "0 0 8px", color: "#76675b", fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em" }}>{label}</p>
+      <strong style={{ fontFamily: "serif", fontSize: "2rem", lineHeight: 1 }}>{value}</strong>
+    </div>
+  );
+}
+
+const sectionHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 16,
+  marginBottom: 20,
+  flexWrap: "wrap",
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: "serif",
+  fontSize: "2rem",
+  lineHeight: 1,
+};
+
+const eyebrowStyle: React.CSSProperties = {
+  margin: "0 0 6px",
+  color: "#E68500",
+  fontSize: "0.68rem",
+  fontWeight: 900,
+  letterSpacing: "0.22em",
+  textTransform: "uppercase",
+};
+
+const statsGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+  gap: 12,
+  marginBottom: 20,
+};
+
+const rowCardStyle: React.CSSProperties = {
+  background: "white",
+  borderRadius: "16px",
+  padding: "16px 20px",
+  border: "1px solid #e0d5c8",
+  boxShadow: "0 14px 40px rgba(50, 26, 14, 0.055)",
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  background: "#FF9500",
+  color: "white",
+  border: "none",
+  padding: "11px 22px",
+  borderRadius: "999px",
+  fontWeight: 900,
+  cursor: "pointer",
+  boxShadow: "0 12px 26px rgba(255, 149, 0, 0.24)",
+};
+
+const secondaryButtonStyle: React.CSSProperties = {
+  padding: "8px 15px",
+  borderRadius: "999px",
+  border: "1px solid #e0d5c8",
+  background: "white",
+  color: "#321A0E",
+  cursor: "pointer",
+  fontWeight: 800,
+};
+
+const dangerButtonStyle: React.CSSProperties = {
+  padding: "8px 15px",
+  borderRadius: "999px",
+  border: "1px solid #dc2626",
+  color: "#dc2626",
+  background: "white",
+  cursor: "pointer",
+  fontWeight: 800,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+};
+
+const mutedStateStyle: React.CSSProperties = {
+  color: "#76675b",
+  padding: "24px 0",
+};
+
+const emptyStateStyle: React.CSSProperties = {
+  background: "white",
+  border: "1px dashed #d3bfa8",
+  borderRadius: 16,
+  color: "#76675b",
+  padding: "28px",
+  textAlign: "center",
+};
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 14px",
