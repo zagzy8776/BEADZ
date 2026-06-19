@@ -184,10 +184,10 @@ function Catalogue() {
         {loading ? (
           <p className="text-center text-[#76675b] py-12">Loading products...</p>
         ) : (
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-5">
             {pageProducts.map((product) => (
-              <article key={product.id} className="group overflow-hidden rounded-[1.8rem] border border-[#321A0E]/10 bg-white shadow-[0_18px_60px_rgba(50,26,14,0.08)] transition-all duration-300 hover:-translate-y-1">
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#eadbc7]">
+              <article key={product.id} className="group overflow-hidden rounded-xl border border-[#321A0E]/10 bg-white shadow-[0_12px_36px_rgba(50,26,14,0.07)] transition-all duration-300 hover:-translate-y-1 sm:rounded-2xl">
+                <div className="relative aspect-square overflow-hidden bg-[#eadbc7] sm:aspect-[4/3]">
                   <img
                     src={product.image}
                     alt={product.name}
@@ -196,31 +196,31 @@ function Catalogue() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                   {product.badge && (
-                    <span className="absolute left-4 top-4 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                    <span className="absolute left-2 top-2 rounded-full border border-white/30 bg-white/15 px-2 py-1 text-[0.5rem] font-black uppercase tracking-[0.12em] text-white backdrop-blur-md sm:left-3 sm:top-3 sm:text-[0.56rem]">
                       {product.badge}
                     </span>
                   )}
-                  <p className="absolute bottom-4 left-4 rounded-full bg-[#FF9500] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.18em] text-white">
+                  <p className="absolute bottom-2 left-2 rounded-full bg-[#FF9500] px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-white sm:bottom-3 sm:left-3 sm:text-[0.58rem]">
                     ₦{product.price.toLocaleString()}
                   </p>
                   {!product.inStock && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                      <span className="rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Out of Stock</span>
+                      <span className="rounded-full bg-white px-2 py-1 text-[0.6rem] font-bold text-black sm:px-4 sm:py-2 sm:text-sm">Out of Stock</span>
                     </div>
                   )}
                 </div>
-                <div className="p-6">
-                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-[#E68500]">{product.category.name}</p>
-                  <h3 className="font-serif text-2xl font-black leading-tight text-[#241209] mt-1">{product.name}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#76675b]">{product.subtitle}</p>
-                  <p className="mt-3 text-xl font-black text-[#FF9500]">₦{product.price.toLocaleString()}</p>
+                <div className="p-2 sm:p-4 lg:p-5">
+                  <p className="truncate text-[0.5rem] font-bold uppercase tracking-[0.12em] text-[#E68500] sm:text-[0.58rem] sm:tracking-[0.2em]">{product.category.name}</p>
+                  <h3 className="mt-1 line-clamp-2 font-serif text-sm font-black leading-tight text-[#241209] sm:text-xl lg:text-2xl">{product.name}</h3>
+                  <p className="mt-1 line-clamp-2 text-[0.68rem] leading-4 text-[#76675b] sm:mt-2 sm:text-sm sm:leading-6">{product.subtitle}</p>
+                  <p className="mt-2 text-sm font-black text-[#FF9500] sm:text-lg">₦{product.price.toLocaleString()}</p>
                   <a
                     href={productWhatsApp(SOCIAL.whatsapp, product)}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-black text-white no-underline transition-all duration-300 hover:scale-105 hover:bg-[#1da851]"
+                    className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#25D366] px-2 py-2 text-[0.62rem] font-black text-white no-underline transition-all duration-300 hover:scale-105 hover:bg-[#1da851] sm:gap-2 sm:px-4 sm:py-3 sm:text-sm"
                   >
-                    <MessageCircle size={16} /> Ask on WhatsApp
+                    <MessageCircle size={14} /> Ask
                   </a>
                 </div>
               </article>
