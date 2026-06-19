@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  ArrowRight,
   Instagram,
   Mail,
   MapPin,
@@ -9,7 +8,6 @@ import {
   Phone,
   ShoppingBag,
   Sparkles,
-  Star,
   Map as MapIcon,
 } from "lucide-react";
 import {
@@ -46,7 +44,7 @@ function Header() {
           <a href={`tel:${SOCIAL.phone}`} aria-label="Call" className="luxury-icon"><Phone size={18} /></a>
           <a href={SOCIAL.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="luxury-icon"><Instagram size={18} /></a>
           <a href="#catalogue" aria-label="Shop" className="luxury-icon"><ShoppingBag size={18} /></a>
-          <a href="#sections" aria-label="Menu" className="luxury-icon"><Menu size={19} /></a>
+          <a href="#catalogue" aria-label="Menu" className="luxury-icon"><Menu size={19} /></a>
         </div>
       </div>
     </header>
@@ -273,44 +271,6 @@ function SectionTitle({ eyebrow, title, copy }: { eyebrow: string; title: string
   );
 }
 
-function Services() {
-  return (
-    <section id="sections" className="bg-[#f7efe4] px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <SectionTitle
-          eyebrow="Our Services"
-          title="Sales, rentals and events in one premium brand."
-          copy="A clear service structure helps customers know exactly how to contact us for beads, attire or catering."
-        />
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            ["Bespoke Coral & Regalia Sales", "Signature atelier", "Luxury coral beadwork, bridal sets, chieftaincy caps, walking sticks and ceremonial accessories crafted with heritage detail."],
-            ["Event & Costume Rentals", "Adults & kids", "Traditional attire rentals for cultural days, weddings, title-taking, birthdays, photoshoots and premium public appearances."],
-            ["Outdoor Catering Services", "Celebration desk", "Outdoor traditional catering, buffet presentation, event service coordination and premium quote planning."],
-          ].map(([title, tag, text]) => (
-            <article key={title} className="rounded-[2rem] border border-[#321A0E]/10 bg-[#FFFDF9] p-7 shadow-[0_18px_60px_rgba(50,26,14,0.07)]">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-[#321A0E] text-[#FF9500]">
-                <Star size={18} fill="currentColor" />
-              </div>
-              <p className="text-[0.62rem] font-black uppercase tracking-[0.28em] text-[#E68500]">{tag}</p>
-              <h3 className="mt-3 font-serif text-3xl font-black leading-none tracking-[-0.04em] text-[#241209]">{title}</h3>
-              <p className="mt-5 text-sm leading-7 text-[#76675b]">{text}</p>
-              <a
-                href={wa(`Hello Evangel Collectibles, I'm interested in ${title}.`)}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#321A0E]/15 px-5 py-3 text-sm font-black text-[#321A0E] no-underline transition-all duration-300 hover:bg-[#FF9500] hover:text-white"
-              >
-                Inquire <ArrowRight size={15} />
-              </a>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ContactFooter() {
   return (
     <footer className="bg-[#1C120C] px-4 pb-24 pt-14 text-white sm:px-6 lg:px-8">
@@ -397,7 +357,6 @@ export default function App() {
       <Header />
       <Hero />
       <Catalogue />
-      <Services />
       <ContactFooter />
       <FloatingActions />
     </main>
