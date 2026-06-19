@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, MessageCircle } from "lucide-react";
 import { getSessionId, fetchCart, updateCartItem, removeCartItem, clearCart, type CartItem, SOCIAL } from "./api.ts";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
-
 interface Props {
-  onCheckout: () => void;
+  onCheckout?: () => void;
   onClose: () => void;
 }
 
@@ -43,6 +41,27 @@ export function CartPage({ onCheckout, onClose }: Props) {
   }
 
   const subtotal = items.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
+
+  function handleCheckout() {
+    if (onCheckout) {
+      onCheckout();
+      return;
+    }
+
+    const lines = items.map((item) => {
+      const name = item.product?.name || "Product";
+      const price = item.product?.price || 0;
+      return `- ${name} x${item.quantity} = ₦${(price * item.quantity).toLocaleString()}`;
+    });
+    const message = [
+      "Hello Evangel Collectibles, I want to order these items:",
+      ...lines,
+      `Total: ₦${subtotal.toLocaleString()}`,
+      "Please confirm availability and payment details.",
+    ].join("\n");
+
+    window.open(`https://wa.me/${SOCIAL.whatsapp}?text=${encodeURIComponent(message)}`, "_blank");
+  }
 
   return (
     <div style={{
@@ -96,12 +115,12 @@ export function CartPage({ onCheckout, onClose }: Props) {
               <span style={{ color: "#76675b" }}>Subtotal</span>
               <span style={{ fontWeight: "bold", fontSize: "1.1rem" }}>₦{subtotal.toLocaleString()}</span>
             </div>
-            <button onClick={onCheckout} style={{
+            <button onClick={handleCheckout} style={{
               width: "100%", padding: "14px", background: "#FF9500", color: "white",
               border: "none", borderRadius: 12, fontWeight: "bold", fontSize: "1rem",
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}>
-              Proceed to Checkout <ArrowRight size={18} />
+              Send Order on WhatsApp <MessageCircle size={18} /><ArrowRight size={18} />
             </button>
             <button onClick={handleClear} style={{ width: "100%", padding: "8px", background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: "0.8rem", marginTop: 8 }}>
               Clear cart

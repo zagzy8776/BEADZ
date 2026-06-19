@@ -326,7 +326,6 @@ function Catalogue() {
       {cartOpen && (
         <CartPage
           onClose={() => { setCartOpen(false); loadCartCount(); }}
-          onCheckout={() => window.open(wa("Hello Evangel Collectibles, I want to checkout the items in my cart."), "_blank")}
         />
       )}
     </section>

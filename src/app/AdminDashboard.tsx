@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
-import { Image, LogOut, MessageSquareQuote, Package, Plus, ShoppingBag, Trash2, UploadCloud, X } from "lucide-react";
+import { LogOut, Package, Plus, ShoppingBag, Trash2, UploadCloud, X } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-type Tab = "products" | "orders" | "testimonials" | "gallery";
+type Tab = "products" | "orders";
 const tabMeta: Record<Tab, { label: string; icon: React.ReactNode }> = {
   products: { label: "Products", icon: <Package size={16} /> },
   orders: { label: "Orders", icon: <ShoppingBag size={16} /> },
-  testimonials: { label: "Testimonials", icon: <MessageSquareQuote size={16} /> },
-  gallery: { label: "Gallery", icon: <Image size={16} /> },
 };
 
 interface Props {
@@ -57,7 +55,7 @@ export function AdminDashboard({ token, onLogout }: Props) {
       {/* Tab Navigation */}
       <div style={{ borderBottom: "1px solid #e0d5c8", background: "rgba(255,255,255,0.82)", backdropFilter: "blur(14px)" }}>
         <div style={{ display: "flex", gap: 8, padding: "12px 24px", overflowX: "auto", maxWidth: "1200px", margin: "0 auto" }}>
-        {(["products", "orders", "testimonials", "gallery"] as Tab[]).map((t) => (
+        {(["products", "orders"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: "11px 16px",
             background: tab === t ? "#1C120C" : "transparent",
@@ -82,8 +80,6 @@ export function AdminDashboard({ token, onLogout }: Props) {
       <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
         {tab === "products" && <ProductsPanel token={token} headers={headers} />}
         {tab === "orders" && <OrdersPanel token={token} headers={headers} />}
-        {tab === "testimonials" && <TestimonialsPanel token={token} headers={headers} />}
-        {tab === "gallery" && <GalleryPanel token={token} headers={headers} />}
       </div>
     </div>
   );
