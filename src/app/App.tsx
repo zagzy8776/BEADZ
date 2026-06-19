@@ -6,19 +6,25 @@ import {
   Menu,
   MessageCircle,
   Phone,
+  ShoppingCart,
   ShoppingBag,
   Sparkles,
   Map as MapIcon,
+  X,
 } from "lucide-react";
 import {
   fetchProducts,
   fetchCategories,
+  fetchCart,
   type Product,
   type Category,
   productWhatsApp,
+  getSessionId,
+  addToCart,
   SOCIAL,
   GOOGLE_MAPS_DIR,
 } from "./api.ts";
+import { CartPage } from "./CartPage.tsx";
 
 function wa(message: string) {
   return `https://wa.me/${SOCIAL.whatsapp}?text=${encodeURIComponent(message)}`;
@@ -101,10 +107,15 @@ function Catalogue() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const sessionId = getSessionId();
 
   useEffect(() => {
     Promise.all([fetchProducts(), fetchCategories()])
-      .then(([p, c]) => { setProducts(p); setCategories(c); setLoading(false); })
+      .then(([p, c]) => { setProducts(p); setCategories(c); setLoading(false); loadCartCount(); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -122,14 +133,41 @@ function Catalogue() {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
+  async function loadCartCount() {
+    try {
+      const items = await fetchCart(sessionId);
+      setCartCount(items.reduce((total, item) => total + item.quantity, 0));
+    } catch {}
+  }
+
+  async function handleAddToCart(product: Product) {
+    if (!product.inStock || addingId) return;
+    setAddingId(product.id);
+    try {
+      await addToCart(sessionId, product.id, undefined, 1);
+      await loadCartCount();
+      setCartOpen(true);
+    } finally {
+      setAddingId(null);
+    }
+  }
+
   return (
     <section id="catalogue" className="bg-[#FFFDF9] px-4 py-20 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <SectionTitle
-          eyebrow="Premium catalogue"
-          title="Browse our collection of cultural luxury."
-          copy="Click any item to inquire via WhatsApp. New products added regularly."
-        />
+        <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <SectionTitle
+            eyebrow="Premium catalogue"
+            title="Browse our collection of cultural luxury."
+            copy="Click any item to view details, add it to cart, or ask questions on WhatsApp."
+          />
+          <button
+            onClick={() => setCartOpen(true)}
+            className="inline-flex w-fit items-center gap-2 rounded-full bg-[#1C120C] px-5 py-3 text-sm font-black text-white shadow-xl shadow-[#321A0E]/15"
+          >
+            <ShoppingCart size={18} /> Cart ({cartCount})
+          </button>
+        </div>
 
         {/* Category Filter */}
         <div className="mb-8 flex flex-wrap gap-2">
@@ -172,7 +210,11 @@ function Catalogue() {
         ) : (
           <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-5">
             {pageProducts.map((product) => (
-              <article key={product.id} className="group overflow-hidden rounded-xl border border-[#321A0E]/10 bg-white shadow-[0_12px_36px_rgba(50,26,14,0.07)] transition-all duration-300 hover:-translate-y-1 sm:rounded-2xl">
+              <article
+                key={product.id}
+                onClick={() => setSelectedProduct(product)}
+                className="group cursor-pointer overflow-hidden rounded-xl border border-[#321A0E]/10 bg-white shadow-[0_12px_36px_rgba(50,26,14,0.07)] transition-all duration-300 hover:-translate-y-1 sm:rounded-2xl"
+              >
                 <div className="relative aspect-square overflow-hidden bg-[#eadbc7] sm:aspect-[4/3]">
                   <img
                     src={product.image}
@@ -200,10 +242,26 @@ function Catalogue() {
                   <h3 className="mt-1 line-clamp-2 font-serif text-sm font-black leading-tight text-[#241209] sm:text-xl lg:text-2xl">{product.name}</h3>
                   <p className="mt-1 line-clamp-2 text-[0.68rem] leading-4 text-[#76675b] sm:mt-2 sm:text-sm sm:leading-6">{product.subtitle}</p>
                   <p className="mt-2 text-sm font-black text-[#FF9500] sm:text-lg">₦{product.price.toLocaleString()}</p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedProduct(product); }}
+                      className="rounded-full border border-[#321A0E]/15 px-2 py-2 text-[0.62rem] font-black text-[#321A0E] transition hover:border-[#FF9500] sm:px-4 sm:py-3 sm:text-sm"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}
+                      disabled={!product.inStock || addingId === product.id}
+                      className="rounded-full bg-[#FF9500] px-2 py-2 text-[0.62rem] font-black text-white transition hover:bg-[#E68500] disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-3 sm:text-sm"
+                    >
+                      {addingId === product.id ? "Adding" : "Add"}
+                    </button>
+                  </div>
                   <a
                     href={productWhatsApp(SOCIAL.whatsapp, product)}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#25D366] px-2 py-2 text-[0.62rem] font-black text-white no-underline transition-all duration-300 hover:scale-105 hover:bg-[#1da851] sm:gap-2 sm:px-4 sm:py-3 sm:text-sm"
                   >
                     <MessageCircle size={14} /> Ask
@@ -255,13 +313,90 @@ function Catalogue() {
           <p className="text-center text-[#76675b] py-12">No products in this category yet.</p>
         )}
       </div>
+
+      {selectedProduct && (
+        <ProductQuickView
+          product={selectedProduct}
+          adding={addingId === selectedProduct.id}
+          onClose={() => setSelectedProduct(null)}
+          onAdd={() => { handleAddToCart(selectedProduct); setSelectedProduct(null); }}
+        />
+      )}
+
+      {cartOpen && (
+        <CartPage
+          onClose={() => { setCartOpen(false); loadCartCount(); }}
+          onCheckout={() => window.open(wa("Hello Evangel Collectibles, I want to checkout the items in my cart."), "_blank")}
+        />
+      )}
     </section>
   );
 }
 
-function SectionTitle({ eyebrow, title, copy }: { eyebrow: string; title: string; copy: string }) {
+function ProductQuickView({ product, adding, onClose, onAdd }: { product: Product; adding: boolean; onClose: () => void; onAdd: () => void }) {
   return (
-    <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+    <div className="fixed inset-0 z-[90] grid place-items-end bg-black/55 p-3 sm:place-items-center sm:p-6">
+      <div className="max-h-[92vh] w-full max-w-4xl overflow-auto rounded-2xl bg-[#FFFDF9] shadow-2xl sm:rounded-[1.5rem]">
+        <div className="grid md:grid-cols-[0.9fr_1.1fr]">
+          <div className="relative aspect-square bg-[#eadbc7] md:min-h-[520px]">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="h-full w-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).src = "/evangel.jpeg"; }}
+            />
+            {product.badge && (
+              <span className="absolute left-4 top-4 rounded-full bg-[#FF9500] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.18em] text-white">
+                {product.badge}
+              </span>
+            )}
+          </div>
+          <div className="p-5 sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.25em] text-[#E68500]">{product.category.name}</p>
+                <h3 className="mt-2 font-serif text-3xl font-black leading-tight text-[#241209] sm:text-4xl">{product.name}</h3>
+              </div>
+              <button onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#321A0E]/15 text-[#321A0E]">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-[#76675b]">{product.subtitle}</p>
+            {product.description && <p className="mt-4 text-sm leading-7 text-[#321A0E]">{product.description}</p>}
+            <p className="mt-5 text-3xl font-black text-[#FF9500]">₦{product.price.toLocaleString()}</p>
+            <p className={`mt-2 text-sm font-black ${product.inStock ? "text-green-700" : "text-red-600"}`}>
+              {product.inStock ? "Available now" : "Out of stock"}
+            </p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <button
+                onClick={onAdd}
+                disabled={!product.inStock || adding}
+                className="rounded-full bg-[#FF9500] px-6 py-4 text-sm font-black text-white transition hover:bg-[#E68500] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {adding ? "Adding to cart..." : "Add to Cart"}
+              </button>
+              <a
+                href={productWhatsApp(SOCIAL.whatsapp, product)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-4 text-sm font-black text-white no-underline transition hover:bg-[#1da851]"
+              >
+                <MessageCircle size={18} /> Ask on WhatsApp
+              </a>
+            </div>
+            <p className="mt-5 rounded-2xl bg-[#f7efe4] p-4 text-xs leading-6 text-[#76675b]">
+              You can add items to cart first, then send us a checkout message on WhatsApp for confirmation and payment details.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({ eyebrow, title, copy, className = "" }: { eyebrow: string; title: string; copy: string; className?: string }) {
+  return (
+    <div className={`flex flex-col justify-between gap-5 md:flex-row md:items-end ${className}`}>
       <div>
         <p className="text-[0.72rem] font-black uppercase tracking-[0.34em] text-[#E68500]">{eyebrow}</p>
         <h2 className="mt-3 max-w-3xl font-serif text-4xl font-black leading-none tracking-[-0.055em] text-[#241209] sm:text-5xl">{title}</h2>
