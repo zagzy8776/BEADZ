@@ -112,7 +112,7 @@ export const SOCIAL = {
   phone: "+2348038797915",
   phoneDisplay: "+234 803 879 7915",
   email: "Evangelcollectibles@gmail.com",
-  address: "Orji flyover opposite Ebere Links fuel station",
+  address: "109 Okigwe Road by Orji Flyover, opposite Ebere Links fuel station, Owerri, Imo State.",
 };
 
 export function productWhatsApp(phone: string, product: Product, variant?: ProductVariant) {
@@ -128,4 +128,4 @@ export function shareWhatsApp(product: Product) {
   return `https://wa.me/?text=${encodeURIComponent(msg + " - " + url)}`;
 }
 
-export const GOOGLE_MAPS_DIR = `https://www.google.com/maps/dir/?api=1&destination=Orji+flyover+opposite+Ebere+Links+fuel+station`;
+export const GOOGLE_MAPS_DIR = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(SOCIAL.address)}`;
